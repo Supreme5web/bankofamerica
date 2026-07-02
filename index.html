@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+  <title>Bank of America - Premier Trust</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2328;
+      --muted: #6e7781;
+      --soft: #f2f4f7;
+      --line: #dde2e8;
+      --paper: #ffffff;
+      --red: #c41230;
+      --blue: #0b4fa3;
+      --green: #177245;
+      --sidebar-width: 280px;
+    }
+
+    * {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      background: #f7f9fb;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      overflow-x: hidden;
+      position: relative;
+      font-weight: bold;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 300;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .toast.success {
+      background: var(--green);
+    }
+    .toast.error {
+      background: var(--red);
+    }
+
+    /* Loading spinner */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      z-index: 250;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid var(--line);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(14, 20, 31, 0.45);
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s;
+    }
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--paper);
+      box-shadow: 8px 0 30px rgba(0,0,0,0.18);
+      z-index: 210;
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .sidebar-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .close-sidebar {
+      background: none;
+      border: none;
+      font-size: 30px;
+      line-height: 1;
+      color: #5e6874;
+    }
+
+    .sidebar nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2328;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .sidebar-link:hover {
+      background: #f0f3f8;
+    }
+
+    .sidebar-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #5e6874;
+    }
+
+    .app-screen {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      background: #f7f9fb;
+      padding-bottom: 70px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 28px 20px 14px;
+      background: var(--paper);
+    }
+
+    .icon-button, .top-action {
+      border: 0;
+      background: transparent;
+      color: #747c86;
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      min-width: 44px;
+      padding: 0;
+    }
+
+    .icon-button small, .top-action small {
+      font-size: 10px;
+    }
+
+    .hamburger {
+      position: relative;
+      width: 24px;
+      height: 19px;
+      display: block;
+    }
+    .hamburger, .hamburger::before, .hamburger::after {
+      border-top: 2px solid #8a929c;
+    }
+    .hamburger::before, .hamburger::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 24px;
+    }
+    .hamburger::before { top: 6px; }
+    .hamburger::after { top: 14px; }
+
+    .top-actions {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .top-action {
+      position: relative;
+    }
+    .top-action i {
+      font-size: 20px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      border: 0;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      color: #555e68;
+      padding: 9px 12px 8px;
+      font-size: 17px;
+    }
+    .tab.active {
+      border-bottom-color: var(--red);
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .assistant-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 16px 16px;
+      min-height: 38px;
+    }
+
+    .site-logo {
+      width: 39px;
+      height: 39px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .search-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    .search-wrapper input {
+      width: 100%;
+      border: 0;
+      border-radius: 9px;
+      background: #edf0f3;
+      color: var(--ink);
+      height: 34px;
+      padding: 0 12px 0 34px;
+      outline: 0;
+      box-shadow: inset 0 0 0 1px rgba(209, 214, 221, 0.7);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      border: 2px solid #8f98a4;
+      border-radius: 50%;
+      z-index: 1;
+    }
+    .search-icon::after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      border-top: 2px solid #8f98a4;
+      right: -6px;
+      bottom: -4px;
+      transform: rotate(45deg);
+    }
+
+    .view {
+      display: none;
+      padding: 0 16px 26px;
+    }
+    .active-view {
+      display: block;
+    }
+
+    .action-card, .summary-card, .account-group, .metric-grid article, .cash-flow, .transactions, .transfer-form {
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 4px 14px rgba(31, 35, 40, 0.08);
+    }
+
+    .action-card {
+      border: 0;
+      width: 100%;
+      text-align: left;
+    }
+
+    .greeting-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .greeting-card h1 {
+      margin: 0 0 5px;
+      font-size: 19px;
+      line-height: 1.1;
+    }
+    .greeting-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .chevron {
+      color: #c2c8cf;
+      font-size: 31px;
+    }
+
+    .life-plan-card {
+      padding: 14px 16px;
+      border-top: 1px solid #eef1f4;
+      border-radius: 0 0 8px 8px;
+      background: var(--paper);
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(31, 35, 40, 0.08);
+    }
+    .life-plan-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .life-plan-header span {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+    }
+    .life-plan-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .summary-card {
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .accent-line {
+      height: 7px;
+      background: var(--blue);
+    }
+    .accent-line span {
+      display: block;
+      width: 62%;
+      height: 100%;
+      background: var(--red);
+      transform: skewX(-21deg);
+      transform-origin: left bottom;
+    }
+    .summary-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+    }
+    .summary-heading h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .summary-heading strong {
+      font-size: 17px;
+    }
+
+    .account-list {
+      display: grid;
+      gap: 13px;
+    }
+
+    .account-group {
+      overflow: hidden;
+      margin: 8px 2px;
+      padding-bottom: 14px;
+    }
+    .group-header {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto 20px;
+      gap: 8px;
+      align-items: center;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+    }
+    .group-header::before {
+      content: "";
+      grid-column: 1 / -1;
+      height: 7px;
+      background: linear-gradient(100deg, var(--red) 0 62%, var(--blue) 62% 100%);
+    }
+    .group-header span:first-child {
+      padding-left: 16px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .group-header strong {
+      font-size: 18px;
+    }
+
+    .caret {
+      width: 10px;
+      height: 10px;
+      margin-right: 14px;
+      border-right: 2px solid #9aa2ac;
+      border-bottom: 2px solid #9aa2ac;
+      transform: rotate(45deg);
+      transition: transform 160ms ease;
+    }
+    .account-group.open .caret {
+      transform: rotate(225deg);
+      margin-top: 26px;
+    }
+
+    .group-body {
+      display: none;
+      padding: 12px 12px 13px;
+      border-top: 1px solid #edf0f3;
+    }
+    .account-group.open .group-body {
+      display: grid;
+      gap: 8px;
+    }
+
+    .account-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 4px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+    }
+    .account-row span {
+      display: grid;
+      gap: 3px;
+    }
+    .account-row small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .not-setup {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .metric-grid article {
+      display: grid;
+      gap: 7px;
+      padding: 14px;
+    }
+    .metric-grid small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .metric-grid strong {
+      font-size: 23px;
+    }
+
+    .cash-flow, .transactions {
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--muted);
+    }
+    .empty-state p {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    .placeholder-view {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .placeholder-view i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .placeholder-view p {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .placeholder-view .title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .transfer-form {
+      padding: 20px;
+      margin-top: 10px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .transfer-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--blue);
+      color: white;
+      border: 0;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .transfer-btn:disabled {
+      background: #a0b4cc;
+      cursor: not-allowed;
+    }
+
+    .confirmation {
+      background: #e8f5e9;
+      border: 1px solid #4caf50;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 14px;
+      display: none;
+    }
+    .confirmation.show {
+      display: block;
+    }
+    .confirmation p {
+      font-weight: 700;
+      color: #2e7d32;
+      margin-bottom: 4px;
+    }
+    .confirmation small {
+      color: #4caf50;
+    }
+
+    .footer-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--paper);
+      border-top: 1px solid var(--line);
+      padding: 8px 0;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+    .footer-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border: 0;
+      background: transparent;
+      color: #747c86;
+      font-size: 11px;
+      transition: color 0.2s;
+    }
+    .footer-tab.active {
+      color: var(--blue);
+    }
+    .footer-tab i {
+      font-size: 22px;
+    }
+
+    @media (max-width: 430px) {
+      .top-bar {
+        padding: 20px 16px 12px;
+      }
+      .greeting-card h1 {
+        font-size: 18px;
+      }
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar menu -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Menu</h2>
+      <button class="close-sidebar" id="closeSidebar" aria-label="Close menu">&times;</button>
+    </div>
+    <nav>
+      <button class="sidebar-link" data-action="profile">
+        <span class="sidebar-icon"><i class="fas fa-user"></i></span> Profile
+      </button>
+      <button class="sidebar-link" data-action="accounts">
+        <span class="sidebar-icon"><i class="fas fa-credit-card"></i></span> Accounts
+      </button>
+      <button class="sidebar-link" data-action="transfer">
+        <span class="sidebar-icon"><i class="fas fa-exchange-alt"></i></span> Transfers
+      </button>
+      <button class="sidebar-link" data-action="deposit">
+        <span class="sidebar-icon"><i class="fas fa-camera"></i></span> Deposit
+      </button>
+      <button class="sidebar-link" data-action="settings">
+        <span class="sidebar-icon"><i class="fas fa-cog"></i></span> Settings
+      </button>
+      <button class="sidebar-link" data-action="support">
+        <span class="sidebar-icon"><i class="fas fa-headset"></i></span> Support
+      </button>
+    </nav>
+  </aside>
+
+  <section class="app-screen">
+    <header class="top-bar">
+      <button class="icon-button" type="button" id="menuButton" aria-label="Open menu">
+        <span class="hamburger"></span>
+        <small>Menu</small>
+      </button>
+      <div class="top-actions">
+        <button class="top-action" type="button" aria-label="Mail">
+          <i class="fas fa-envelope"></i>
+          <small>Mail</small>
+        </button>
+        <button class="top-action" type="button" aria-label="Products">
+          <i class="fas fa-shopping-cart"></i>
+          <small>Products</small>
+        </button>
+        <button class="top-action" type="button" aria-label="Log out">
+          <i class="fas fa-sign-out-alt"></i>
+          <small>Log Out</small>
+        </button>
+      </div>
+    </header>
+
+    <div class="assistant-row">
+      <div class="search-wrapper">
+        <span class="search-icon"></span>
+        <input id="assistantInput" type="search" placeholder="Hi, I'm Erica. How can I help?" autocomplete="off" />
+      </div>
+      <div class="site-logo">
+        <img src="https://tse3.mm.bing.net/th/id/OIP.1j1wFxvL5owLblfvbVICsAHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="Bank of America" width="87%" />
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" type="button" data-view="accounts">Accounts</button>
+      <button class="tab" type="button" data-view="dashboard">Dashboard</button>
+    </nav>
+
+    <!-- Accounts View -->
+    <section id="accountsView" class="view active-view">
+      <article class="greeting-card action-card">
+        <div>
+          <h1>Hello, Michael</h1>
+          <p>Welcome to Bank of America</p>
+        </div>
+        <span class="chevron">&rsaquo;</span>
+      </article>
+
+      <div class="life-plan-card">
+        <div class="life-plan-header">
+          <span>Bank of America Life Plan &reg;</span>
+        </div>
+        <div class="life-plan-details">
+          <span>Your next steps are ready. Let's go!</span>
+          <span><i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <section class="account-list">
+        <article class="account-group open">
+          <button class="group-header" type="button" aria-expanded="true">
+            <span>Banking</span>
+            <strong>$20,000.00</strong>
+            <span class="caret"></span>
+          </button>
+          <div class="group-body">
+            <button class="account-row" type="button">
+              <span><b>Advantage Checking</b><small>Available balance</small></span>
+              <strong>$20,000.00</strong>
+            </button>
+          </div>
+        </article>
+
+        <article class="account-group">
+          <button class="group-header" type="button" aria-expanded="false">
+            <span>Credit Cards</span>
+            <strong>$0.00</strong>
+            <span class="caret"></span>
+          </button>
+          <div class="group-body">
+            <button class="account-row" type="button">
+              <span><b>Travel Rewards Visa</b><small class="not-setup">Not yet set up</small></span>
+              <strong class="not-setup">&mdash;</strong>
+            </button>
+          </div>
+        </article>
+
+        <article class="account-group">
+          <button class="group-header" type="button" aria-expanded="false">
+            <span>Investments</span>
+            <strong>$0.00</strong>
+            <span class="caret"></span>
+          </button>
+          <div class="group-body">
+            <p style="color: var(--muted); font-size: 13px; padding: 8px">
+              Open an investment account to start building your portfolio.
+            </p>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <!-- Dashboard View -->
+    <section id="dashboardView" class="view">
+      <section class="metric-grid">
+        <article><small>Monthly income</small><strong>$0.00</strong></article>
+        <article><small>Monthly spending</small><strong>$0.00</strong></article>
+      </section>
+      <section class="cash-flow">
+        <div class="section-title"><h2>Cash Flow</h2></div>
+        <div class="empty-state"><p>No cash flow data yet.</p></div>
+      </section>
+      <section class="transactions">
+        <div class="section-title"><h2>Recent Activity</h2></div>
+        <div class="empty-state"><p>No recent transactions.</p></div>
+      </section>
+    </section>
+
+    <!-- Pay & Transfer View -->
+    <section id="paytransferView" class="view">
+      <div class="section-title" style="margin-top:10px"><h2>Transfer Money</h2></div>
+      <div class="transfer-form">
+        <div class="form-group">
+          <label for="fromAccount">From</label>
+          <select id="fromAccount">
+            <option>Advantage Checking - $20,000.00</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="recipientName">Recipient Name</label>
+          <input id="recipientName" placeholder="Enter recipient name" />
+        </div>
+        <div class="form-group">
+          <label for="amount">Amount</label>
+          <input type="number" id="amount" placeholder="$0.00" min="1" step="0.01" />
+        </div>
+        <button class="transfer-btn" id="submitTransfer">Send Money</button>
+        <div class="confirmation" id="confirmationMessage">
+          <p>Transfer Complete</p>
+          <small id="confirmationDetails"></small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Deposit View -->
+    <section id="depositView" class="view">
+      <div class="placeholder-view">
+        <i class="fas fa-camera"></i>
+        <p class="title">Mobile Check Deposit</p>
+        <p>Take a photo of your endorsed check to deposit funds directly into your account.</p>
+      </div>
+    </section>
+
+    <!-- Invest View -->
+    <section id="investView" class="view">
+      <div class="placeholder-view">
+        <i class="fas fa-chart-line"></i>
+        <p class="title">Start Investing</p>
+        <p>Open an investment account to begin building your portfolio.</p>
+      </div>
+    </section>
+  </section>
+
+  <!-- Footer Navigation -->
+  <footer class="footer-nav">
+    <button class="footer-tab active" data-view="accounts" aria-label="Accounts">
+      <i class="fas fa-university"></i>
+      <span>Accounts</span>
+    </button>
+    <button class="footer-tab" data-view="paytransfer" aria-label="Pay and Transfer">
+      <i class="fas fa-paper-plane"></i>
+      <span>Pay & Transfer</span>
+    </button>
+    <button class="footer-tab" data-view="deposit" aria-label="Deposit Checks">
+      <i class="fas fa-mobile-alt"></i>
+      <span>Deposit Checks</span>
+    </button>
+    <button class="footer-tab" data-view="invest" aria-label="Invest">
+      <i class="fas fa-chart-pie"></i>
+      <span>Invest</span>
+    </button>
+  </footer>
+
+  <script>
+    (function() {
+      // DOM elements
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const menuButton = document.getElementById('menuButton');
+      const closeSidebar = document.getElementById('closeSidebar');
+      const toast = document.getElementById('toast');
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const submitBtn = document.getElementById('submitTransfer');
+
+      const viewElements = {
+        accounts: document.getElementById('accountsView'),
+        dashboard: document.getElementById('dashboardView'),
+        paytransfer: document.getElementById('paytransferView'),
+        deposit: document.getElementById('depositView'),
+        invest: document.getElementById('investView')
+      };
+      const tabs = document.querySelectorAll('.tab');
+      const footerTabs = document.querySelectorAll('.footer-tab');
+
+      // Toast system
+      let toastTimer;
+      function showToast(message, type = '') {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.className = 'toast ' + type + ' show';
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 3000);
+      }
+
+      // Loading system
+      function showLoading() {
+        loadingOverlay.classList.add('active');
+      }
+      function hideLoading() {
+        loadingOverlay.classList.remove('active');
+      }
+
+      // Sidebar
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+      }
+      function closeSidebarFn() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+      }
+
+      menuButton.addEventListener('click', openSidebar);
+      closeSidebar.addEventListener('click', closeSidebarFn);
+      overlay.addEventListener('click', closeSidebarFn);
+
+      // Sidebar link actions
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          const action = e.currentTarget.dataset.action;
+          switch (action) {
+            case 'profile':
+              showToast('Opening profile details...');
+              break;
+            case 'accounts':
+              switchView('accounts');
+              break;
+            case 'transfer':
+              switchView('paytransfer');
+              break;
+            case 'deposit':
+              switchView('deposit');
+              break;
+            case 'settings':
+              showToast('Opening settings...');
+              break;
+            case 'support':
+              window.location.href = 'mailto:support@premiertrustbank.com?subject=Support%20Request';
+              break;
+          }
+          closeSidebarFn();
+        });
+      });
+
+      // View switching with loading state
+      function switchView(viewName) {
+        if (!viewElements[viewName]) return;
+
+        showLoading();
+        setTimeout(() => {
+          Object.values(viewElements).forEach(v => v.classList.remove('active-view'));
+          viewElements[viewName].classList.add('active-view');
+
+          tabs.forEach(t => t.classList.remove('active'));
+          footerTabs.forEach(f => f.classList.remove('active'));
+
+          const activeTab = document.querySelector(`.tab[data-view="${viewName}"]`);
+          const activeFooter = document.querySelector(`.footer-tab[data-view="${viewName}"]`);
+          if (activeTab) activeTab.classList.add('active');
+          if (activeFooter) activeFooter.classList.add('active');
+
+          hideLoading();
+        }, 150);
+      }
+
+      tabs.forEach(tab => tab.addEventListener('click', () => switchView(tab.dataset.view)));
+      footerTabs.forEach(ft => ft.addEventListener('click', () => switchView(ft.dataset.view)));
+
+      // Account group toggle
+      document.querySelectorAll('.group-header').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const group = btn.closest('.account-group');
+          group.classList.toggle('open');
+          btn.setAttribute('aria-expanded', group.classList.contains('open'));
+        });
+      });
+
+      // Transfer submission
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+          const name = document.getElementById('recipientName')?.value.trim();
+          const amount = parseFloat(document.getElementById('amount')?.value);
+
+          // Validation
+          if (!name) {
+            showToast('Please enter a recipient name.', 'error');
+            return;
+          }
+          if (!amount || isNaN(amount) || amount <= 0) {
+            showToast('Please enter a valid amount.', 'error');
+            return;
+          }
+          if (amount > 20000) {
+            showToast('Insufficient funds. Your available balance is $20,000.00.', 'error');
+            return;
+          }
+
+          // Simulate transfer
+          showLoading();
+          submitBtn.disabled = true;
+
+          setTimeout(() => {
+            const formattedAmount = `$${amount.toFixed(2)}`;
+            document.getElementById('confirmationDetails').textContent = `${formattedAmount} sent to ${name}`;
+            document.getElementById('confirmationMessage').classList.add('show');
+
+            // Clear form
+            document.getElementById('recipientName').value = '';
+            document.getElementById('amount').value = '';
+
+            showToast('Transfer completed successfully!', 'success');
+            hideLoading();
+            submitBtn.disabled = false;
+
+            // Hide confirmation after 5 seconds
+            setTimeout(() => {
+              document.getElementById('confirmationMessage').classList.remove('show');
+            }, 5000);
+          }, 800);
+        });
+      }
+
+      // Assistant search
+      document.getElementById('assistantInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const query = e.target.value.trim();
+          if (query) {
+            showToast(`Searching for "${query}"...`);
+          } else {
+            showToast('How can I help you today?');
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
