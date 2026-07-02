@@ -646,6 +646,123 @@
       color: #4caf50;
     }
 
+    /* Quick actions grid (Pay & Transfer) */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .quick-action-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 16px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 4px 14px rgba(31, 35, 40, 0.08);
+      text-align: left;
+    }
+    .quick-action-card i {
+      font-size: 22px;
+      color: var(--blue);
+    }
+    .quick-action-card .qa-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .quick-action-card .qa-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .activity-empty {
+      min-height: 30px;
+    }
+
+    /* Check deposit capture */
+    .check-capture-grid {
+      display: grid;
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .check-capture-box {
+      display: block;
+      border: 2px dashed var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      background: var(--paper);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .check-capture-box.captured {
+      border-color: var(--green);
+      border-style: solid;
+      background: #f3faf4;
+    }
+    .check-capture-box i {
+      font-size: 30px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .check-capture-box.captured i {
+      color: var(--green);
+    }
+    .check-capture-box .cc-label {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .check-capture-box .cc-status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .check-capture-box .cc-preview {
+      max-width: 100%;
+      max-height: 120px;
+      border-radius: 6px;
+      margin-top: 10px;
+      display: none;
+    }
+    .check-capture-box.captured .cc-preview {
+      display: inline-block;
+    }
+
+    /* Invest tabs */
+    .invest-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .invest-tab-btn {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+    }
+    .invest-tab-btn.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: #eef4fc;
+    }
+    .invest-content {
+      display: none;
+    }
+    .invest-content.active {
+      display: block;
+    }
+
     .footer-nav {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -850,8 +967,30 @@
 
     <!-- Pay & Transfer View -->
     <section id="paytransferView" class="view">
-      <div class="section-title" style="margin-top:10px"><h2>Transfer Money</h2></div>
-      <div class="transfer-form">
+      <div class="quick-actions-grid">
+        <button class="quick-action-card" type="button" id="qaTransfer">
+          <i class="fas fa-exchange-alt"></i>
+          <span class="qa-title">Transfer</span>
+          <span class="qa-sub">between my accounts</span>
+        </button>
+        <button class="quick-action-card" type="button" id="qaZelle">
+          <i class="fas fa-bolt"></i>
+          <span class="qa-title">Zelle&reg;</span>
+          <span class="qa-sub">send or receive</span>
+        </button>
+        <button class="quick-action-card" type="button" id="qaPayBills">
+          <i class="fas fa-file-invoice-dollar"></i>
+          <span class="qa-title">Pay Bills</span>
+          <span class="qa-sub">pay now or schedule</span>
+        </button>
+        <button class="quick-action-card" type="button" id="qaWire">
+          <i class="fas fa-globe"></i>
+          <span class="qa-title">Wire</span>
+          <span class="qa-sub">U.S. or international</span>
+        </button>
+      </div>
+
+      <div class="transfer-form" id="transferFormContainer" style="display:none;">
         <div class="form-group">
           <label for="fromAccount">From</label>
           <select id="fromAccount">
@@ -872,23 +1011,58 @@
           <small id="confirmationDetails"></small>
         </div>
       </div>
+
+      <div class="section-title" style="margin-top:20px"><h2>Activity</h2></div>
+      <div class="activity-empty"></div>
     </section>
 
     <!-- Deposit View -->
     <section id="depositView" class="view">
-      <div class="placeholder-view">
-        <i class="fas fa-camera"></i>
-        <p class="title">Mobile Check Deposit</p>
-        <p>Take a photo of your endorsed check to deposit funds directly into your account.</p>
+      <div class="section-title" style="margin-top:10px"><h2>Mobile Check Deposit</h2></div>
+      <div class="check-capture-grid">
+        <label class="check-capture-box" id="frontCaptureBox" for="frontCheckInput">
+          <i class="fas fa-camera"></i>
+          <div class="cc-label">Front of Check</div>
+          <div class="cc-status" id="frontStatus">Tap to take a photo</div>
+          <img class="cc-preview" id="frontPreview" alt="Front of check preview" />
+        </label>
+        <input type="file" id="frontCheckInput" accept="image/*" capture="environment" style="display:none" />
+
+        <label class="check-capture-box" id="backCaptureBox" for="backCheckInput">
+          <i class="fas fa-camera"></i>
+          <div class="cc-label">Back of Check</div>
+          <div class="cc-status" id="backStatus">Tap to take a photo</div>
+          <img class="cc-preview" id="backPreview" alt="Back of check preview" />
+        </label>
+        <input type="file" id="backCheckInput" accept="image/*" capture="environment" style="display:none" />
+      </div>
+      <button class="transfer-btn" id="submitDeposit" disabled>Submit Deposit</button>
+      <div class="confirmation" id="depositConfirmation">
+        <p>Deposit Submitted</p>
+        <small id="depositConfirmationDetails"></small>
       </div>
     </section>
 
     <!-- Invest View -->
     <section id="investView" class="view">
-      <div class="placeholder-view">
-        <i class="fas fa-chart-line"></i>
-        <p class="title">Start Investing</p>
-        <p>Open an investment account to begin building your portfolio.</p>
+      <div class="section-title" style="margin-top:10px"><h2>Invest</h2></div>
+      <div class="invest-tabs">
+        <button class="invest-tab-btn active" type="button" data-invest="crypto">Crypto</button>
+        <button class="invest-tab-btn" type="button" data-invest="stocks">Stocks</button>
+      </div>
+      <div class="invest-content active" id="cryptoContent">
+        <div class="placeholder-view">
+          <i class="fas fa-coins"></i>
+          <p class="title">Crypto Investing</p>
+          <p>Open a crypto account to start trading digital assets.</p>
+        </div>
+      </div>
+      <div class="invest-content" id="stocksContent">
+        <div class="placeholder-view">
+          <i class="fas fa-chart-line"></i>
+          <p class="title">Stock Investing</p>
+          <p>Open a brokerage account to start building your stock portfolio.</p>
+        </div>
       </div>
     </section>
   </section>
@@ -1072,6 +1246,126 @@
           }, 800);
         });
       }
+
+      // Quick action cards (Pay & Transfer)
+      const transferFormContainer = document.getElementById('transferFormContainer');
+      const qaTransfer = document.getElementById('qaTransfer');
+      const qaZelle = document.getElementById('qaZelle');
+      const qaPayBills = document.getElementById('qaPayBills');
+      const qaWire = document.getElementById('qaWire');
+
+      if (qaTransfer && transferFormContainer) {
+        qaTransfer.addEventListener('click', () => {
+          const isHidden = transferFormContainer.style.display === 'none';
+          transferFormContainer.style.display = isHidden ? 'block' : 'none';
+          if (isHidden) {
+            transferFormContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+      }
+      if (qaZelle) {
+        qaZelle.addEventListener('click', () => showToast('Zelle transfers are coming soon.'));
+      }
+      if (qaPayBills) {
+        qaPayBills.addEventListener('click', () => showToast('Bill Pay is coming soon.'));
+      }
+      if (qaWire) {
+        qaWire.addEventListener('click', () => showToast('Wire transfers are coming soon.'));
+      }
+
+      // Mobile Check Deposit
+      const frontInput = document.getElementById('frontCheckInput');
+      const backInput = document.getElementById('backCheckInput');
+      const frontBox = document.getElementById('frontCaptureBox');
+      const backBox = document.getElementById('backCaptureBox');
+      const frontStatus = document.getElementById('frontStatus');
+      const backStatus = document.getElementById('backStatus');
+      const frontPreview = document.getElementById('frontPreview');
+      const backPreview = document.getElementById('backPreview');
+      const submitDepositBtn = document.getElementById('submitDeposit');
+      const depositConfirmation = document.getElementById('depositConfirmation');
+      const depositConfirmationDetails = document.getElementById('depositConfirmationDetails');
+
+      let frontCaptured = false;
+      let backCaptured = false;
+
+      function updateDepositButtonState() {
+        if (submitDepositBtn) {
+          submitDepositBtn.disabled = !(frontCaptured && backCaptured);
+        }
+      }
+
+      function handleCheckCapture(input, box, status, preview, side) {
+        input.addEventListener('change', () => {
+          const file = input.files && input.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            preview.src = e.target.result;
+            box.classList.add('captured');
+            status.textContent = 'Photo captured';
+            if (side === 'front') frontCaptured = true;
+            if (side === 'back') backCaptured = true;
+            updateDepositButtonState();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (frontInput && frontBox && frontStatus && frontPreview) {
+        handleCheckCapture(frontInput, frontBox, frontStatus, frontPreview, 'front');
+      }
+      if (backInput && backBox && backStatus && backPreview) {
+        handleCheckCapture(backInput, backBox, backStatus, backPreview, 'back');
+      }
+
+      if (submitDepositBtn) {
+        submitDepositBtn.addEventListener('click', () => {
+          if (!(frontCaptured && backCaptured)) return;
+
+          showLoading();
+          submitDepositBtn.disabled = true;
+
+          setTimeout(() => {
+            depositConfirmationDetails.textContent = 'Your check images have been received for review.';
+            depositConfirmation.classList.add('show');
+            showToast('Deposit submitted successfully!', 'success');
+            hideLoading();
+
+            // Reset capture state
+            frontCaptured = false;
+            backCaptured = false;
+            frontBox.classList.remove('captured');
+            backBox.classList.remove('captured');
+            frontStatus.textContent = 'Tap to take a photo';
+            backStatus.textContent = 'Tap to take a photo';
+            frontInput.value = '';
+            backInput.value = '';
+            updateDepositButtonState();
+
+            setTimeout(() => {
+              depositConfirmation.classList.remove('show');
+            }, 5000);
+          }, 800);
+        });
+      }
+
+      // Invest tabs
+      const investTabBtns = document.querySelectorAll('.invest-tab-btn');
+      const investContents = {
+        crypto: document.getElementById('cryptoContent'),
+        stocks: document.getElementById('stocksContent')
+      };
+      investTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          investTabBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          Object.values(investContents).forEach(c => c && c.classList.remove('active'));
+          const target = investContents[btn.dataset.invest];
+          if (target) target.classList.add('active');
+        });
+      });
 
       // Assistant search
       document.getElementById('assistantInput')?.addEventListener('keydown', (e) => {
